@@ -1,0 +1,145 @@
+/* Pinii și popup-ul hărții. Sunt create din JS, deci stau în afara componentelor. */
+/* Fără position și fără tranziție pe transform: MapLibre poziționează
+   markerul absolut, prin transform, la fiecare cadru. */
+.pin-pret {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: #13232e;
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgb(19 35 46 / 0.3);
+  transition: background-color 150ms ease-out;
+}
+.pin-pret::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  background: inherit;
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 1px;
+  z-index: -1;
+}
+.pin-pret:hover,
+.pin-pret.activ,
+.pin-pret.evidentiat {
+  background: #ae8c55;
+  color: #1b1406;
+  z-index: 5;
+}
+.pin-pret.stins {
+  opacity: 0.35;
+}
+.pin-pret:focus-visible {
+  outline: 2px solid #ae8c55;
+  outline-offset: 3px;
+}
+
+.popup-elanis .maplibregl-popup-content {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgb(19 35 46 / 0.08), 0 24px 48px -16px rgb(19 35 46 / 0.35);
+  font-family: var(--font-sans);
+}
+.popup-elanis .maplibregl-popup-close-button {
+  top: 6px;
+  right: 6px;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 0.92);
+  color: #13232e;
+  font-size: 20px;
+  line-height: 28px;
+}
+.popup-oferta {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+.popup-oferta img {
+  display: block;
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+}
+.popup-corp {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px 14px;
+}
+.popup-loc,
+.popup-car {
+  color: #5f6b74;
+  font-size: 0.8rem;
+}
+.popup-titlu {
+  color: #13232e;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.popup-pret {
+  margin-top: 6px;
+  color: #13232e;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-stretch: 112%;
+  font-variant-numeric: tabular-nums;
+}
+.popup-oferta:hover .popup-titlu {
+  text-decoration: underline;
+  text-decoration-color: #ae8c55;
+  text-underline-offset: 3px;
+}
+
+.maplibregl-ctrl-group {
+  border-radius: 8px !important;
+  box-shadow: 0 1px 4px rgb(19 35 46 / 0.2) !important;
+}
+.maplibregl-cooperative-gesture-screen {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+}
+
+/* Cercul de „zonă aproximativă” de pe pagina ofertei */
+.zona-aprox {
+  width: 120px;
+  height: 120px;
+  border: 2px solid #ae8c55;
+  border-radius: 50%;
+  background: rgb(174 140 85 / 0.16);
+}
+
+.pin-pret[hidden] {
+  display: none;
+}
+/* Pin de grup: mai multe oferte apropiate, se desface la zoom. */
+.pin-pret.grup {
+  background: #fff;
+  color: #13232e;
+  box-shadow:
+    inset 0 0 0 1.5px #13232e,
+    0 2px 6px rgb(19 35 46 / 0.3);
+}
+.pin-pret.grup::after {
+  background: #13232e;
+}
+.pin-pret.grup:hover {
+  background: #ae8c55;
+  color: #1b1406;
+  box-shadow: 0 2px 6px rgb(19 35 46 / 0.3);
+}

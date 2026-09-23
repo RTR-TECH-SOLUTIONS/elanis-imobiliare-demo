@@ -1,0 +1,62 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { cale } from '../lib/oferta';
+
+interface Props {
+  titlu: string;
+  descriere?: string;
+  /** Pe prima pagină antetul stă transparent peste fotografia din hero. */
+  peste?: boolean;
+}
+const { titlu, descriere, peste = false } = Astro.props;
+---
+
+<!doctype html>
+<html lang="ro">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{titlu}</title>
+    {descriere && <meta name="description" content={descriere} />}
+    <!-- Demo de prezentare: nu se indexează. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#13232E" />
+    <link rel="icon" href={cale('/favicon.svg')} type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,300..800&display=swap"
+    />
+    <slot name="head" />
+  </head>
+  <body class={peste ? 'antet-peste' : ''}>
+    <a
+      href="#continut"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-md focus:bg-ink focus:px-4 focus:py-2 focus:text-white"
+      >Sari la conținut</a
+    >
+    <Header peste={peste} />
+    <main id="continut" style={peste ? undefined : 'padding-top: var(--header-h)'}>
+      <slot />
+    </main>
+    <Footer />
+    <script>
+      // Intrări discrete la scroll pentru blocurile marcate cu .apare.
+      const io = new IntersectionObserver(
+        (intrari) => {
+          for (const i of intrari) {
+            if (i.isIntersecting) {
+              i.target.classList.add('vizibil');
+              io.unobserve(i.target);
+            }
+          }
+        },
+        { rootMargin: '0px 0px -8% 0px' },
+      );
+      document.querySelectorAll('.apare').forEach((el) => io.observe(el));
+    </script>
+  </body>
+</html>

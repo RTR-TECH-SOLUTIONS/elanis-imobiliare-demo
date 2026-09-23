@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.astro/
+.DS_Store
+.env
+.env.*
+
+# Workerul MapLibre se copiază în public/ la fiecare dev/build (scripts/copiaza-worker.mjs).
+public/maplibre/
+
+# Materiale brute ale clientului și capturi de lucru: stau local, nu în repo.
+_brief/
+.playwright-mcp/
+.claude/

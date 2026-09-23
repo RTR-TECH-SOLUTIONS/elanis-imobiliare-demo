@@ -1,0 +1,192 @@
+---
+import Icon from './Icon.astro';
+import { zone } from '../data/zone';
+import { oferte } from '../data/oferte';
+import { cale } from '../lib/oferta';
+
+// Doar cartierele în care există oferte acum, ca nimeni să nu caute în gol.
+const cuOferte = zone.filter((z) => oferte.some((o) => o.zona === z.slug));
+---
+
+<form class="cautare" action={cale('/oferte/')} method="get" data-cautare role="search" aria-label="Caută oferte">
+  <div class="rand">
+    <fieldset class="camp-tranz">
+      <legend class="sr-only">Tip tranzacție</legend>
+      <div class="segment w-full">
+        <input type="radio" name="tranzactie" id="c-vanzare" value="vanzare" checked />
+        <label for="c-vanzare">Cumpăr</label>
+        <input type="radio" name="tranzactie" id="c-inchiriere" value="inchiriere" />
+        <label for="c-inchiriere">Închiriez</label>
+      </div>
+    </fieldset>
+
+    <div>
+      <label class="eticheta-camp" for="c-tip">Ce cauți</label>
+      <select class="camp" id="c-tip" name="tip">
+        <option value="">Orice tip</option>
+        <option value="apartament">Apartament</option>
+        <option value="garsoniera">Garsonieră</option>
+        <option value="casa">Casă</option>
+        <option value="teren">Teren</option>
+        <option value="spatiu">Spațiu comercial</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="eticheta-camp" for="c-zona">Cartier</label>
+      <select class="camp" id="c-zona" name="zona">
+        <option value="">Toate zonele</option>
+        {cuOferte.map((z) => <option value={z.slug}>{z.nume}</option>)}
+      </select>
+    </div>
+
+    <div>
+      <label class="eticheta-camp" for="c-buget">Buget maxim</label>
+      <select class="camp cifre" id="c-buget" name="pretMax" data-buget>
+        <option value="">Fără limită</option>
+        <option value="40000" data-t="vanzare">40.000 €</option>
+        <option value="60000" data-t="vanzare">60.000 €</option>
+        <option value="80000" data-t="vanzare">80.000 €</option>
+        <option value="100000" data-t="vanzare">100.000 €</option>
+        <option value="150000" data-t="vanzare">150.000 €</option>
+        <option value="200000" data-t="vanzare">200.000 €</option>
+        <option value="300" data-t="inchiriere" hidden>300 € / lună</option>
+        <option value="400" data-t="inchiriere" hidden>400 € / lună</option>
+        <option value="600" data-t="inchiriere" hidden>600 € / lună</option>
+        <option value="1000" data-t="inchiriere" hidden>1.000 € / lună</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="eticheta-camp" for="c-camere">Camere</label>
+      <select class="camp" id="c-camere" name="camere">
+        <option value="">Oricâte</option>
+        <option value="1">1 cameră</option>
+        <option value="2">2 camere</option>
+        <option value="3">3 camere</option>
+        <option value="4">4 sau mai multe</option>
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-ink buton-cauta">
+      <Icon nume="cauta" marime={19} />
+      <span>Caută</span>
+    </button>
+  </div>
+
+  <div class="rand-id">
+    <label for="c-id" class="text-sm text-ink-3">Ai văzut un anunț pe Facebook? Caută după ID:</label>
+    <div class="flex gap-2">
+      <input id="c-id" class="camp camp-id cifre" placeholder="ex. P306249" autocomplete="off" data-id-oferta />
+      <button type="button" class="btn btn-contur" data-deschide-id>Deschide</button>
+    </div>
+    <p class="text-sm text-[#8a2f1d]" data-id-eroare hidden role="status"></p>
+  </div>
+</form>
+
+<style>
+  .cautare {
+    padding: 18px;
+    border-radius: var(--radius-panou);
+    background: #fff;
+    box-shadow: var(--shadow-ridicat);
+  }
+  .rand {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    align-items: end;
+  }
+  .camp-tranz,
+  .buton-cauta {
+    grid-column: 1 / -1;
+  }
+  .buton-cauta {
+    min-height: 50px;
+  }
+  .rand-id {
+    display: grid;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-line);
+  }
+  .camp-id {
+    max-width: 200px;
+    min-height: 44px;
+  }
+  .rand-id .btn {
+    min-height: 44px;
+  }
+  @media (min-width: 1024px) {
+    .cautare {
+      padding: 20px 22px;
+    }
+    .rand {
+      grid-template-columns: 220px repeat(4, minmax(0, 1fr)) auto;
+    }
+    .camp-tranz,
+    .buton-cauta {
+      grid-column: auto;
+    }
+    .rand-id {
+      grid-template-columns: auto auto 1fr;
+      align-items: center;
+      gap: 12px;
+    }
+  }
+</style>
+
+<script>
+  import { oferte } from '../data/oferte';
+  import { linkOferta } from '../lib/oferta';
+
+  document.querySelectorAll<HTMLFormElement>('[data-cautare]').forEach((form) => {
+    const buget = form.querySelector<HTMLSelectElement>('[data-buget]')!;
+
+    // Bugetul se schimbă între prețuri de vânzare și chirii lunare.
+    const sincronizeazaBuget = () => {
+      const t = (form.elements.namedItem('tranzactie') as RadioNodeList).value;
+      buget.querySelectorAll<HTMLOptionElement>('option[data-t]').forEach((o) => {
+        o.hidden = o.dataset.t !== t;
+      });
+      const ales = buget.selectedOptions[0];
+      if (ales?.hidden) buget.value = '';
+    };
+    form.addEventListener('change', (e) => {
+      if ((e.target as HTMLInputElement).name === 'tranzactie') sincronizeazaBuget();
+    });
+
+    // Câmpurile goale nu mai ajung în URL.
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const date = new FormData(form);
+      const q = new URLSearchParams();
+      for (const [k, v] of date) if (v && k !== 'id') q.set(k, String(v));
+      window.location.href = `${form.action}${q.size ? `?${q}` : ''}`;
+    });
+
+    // Căutarea după ID-ul din anunțurile de Facebook.
+    const campId = form.querySelector<HTMLInputElement>('[data-id-oferta]')!;
+    const eroare = form.querySelector<HTMLElement>('[data-id-eroare]')!;
+    const deschide = () => {
+      const cautat = campId.value.trim().toUpperCase().replace(/\s+/g, '');
+      if (!cautat) return campId.focus();
+      const gasit = oferte.find((o) => o.id === cautat || o.id === `P${cautat}`);
+      if (gasit) {
+        window.location.href = linkOferta(gasit);
+      } else {
+        eroare.textContent = `Nu găsim anunțul ${cautat}. Poate a fost vândut; sună-ne și verificăm.`;
+        eroare.hidden = false;
+      }
+    };
+    form.querySelector('[data-deschide-id]')!.addEventListener('click', deschide);
+    campId.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        deschide();
+      }
+    });
+    campId.addEventListener('input', () => (eroare.hidden = true));
+  });
+</script>

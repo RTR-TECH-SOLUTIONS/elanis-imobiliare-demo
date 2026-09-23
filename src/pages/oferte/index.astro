@@ -1,0 +1,593 @@
+---
+import Baza from '../../layouts/Baza.astro';
+import OfertaCard from '../../components/OfertaCard.astro';
+import Icon from '../../components/Icon.astro';
+import { oferte, type Tip, type Eticheta } from '../../data/oferte';
+import { zone } from '../../data/zone';
+import { linkWhatsApp } from '../../data/firma';
+import { cale, dupaData, numeEticheta, numeTip, pinOferta } from '../../lib/oferta';
+
+const lista = dupaData(oferte);
+const tipuri = (Object.keys(numeTip) as Tip[]).map((t) => ({ t, nume: numeTip[t].multe, nr: oferte.filter((o) => o.tip === t).length })).filter((x) => x.nr);
+const cartiere = zone.map((z) => ({ ...z, nr: oferte.filter((o) => o.zona === z.slug).length })).filter((z) => z.nr);
+const etichete = (['comision0', 'exclusivitate', 'pretRedus', 'nou'] as Eticheta[]).map((e) => ({ e, nume: numeEticheta[e], nr: oferte.filter((o) => o.etichete.includes(e)).length }));
+const pini = oferte.map(pinOferta);
+---
+
+<Baza titlu="Oferte imobiliare în Turda · Elanis Imobiliare" descriere="Apartamente, case, terenuri și spații comerciale de vânzare și de închiriat în Turda și împrejurimi.">
+  <div class="container-site pt-8 md:pt-12">
+    <nav aria-label="Pesmet" class="text-sm text-ink-3">
+      <a href={cale('/')} class="hover:text-ink">Acasă</a> <span aria-hidden="true" class="mx-1.5">/</span> <span>Oferte</span>
+    </nav>
+    <div class="mt-3 flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 class="text-[clamp(1.8rem,1.3rem+2vw,2.7rem)]" data-titlu>Oferte imobiliare în Turda</h1>
+        <p class="mt-2 text-ink-3 cifre" aria-live="polite"><span data-numar>{oferte.length}</span> <span data-numar-text>oferte</span></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-site mt-8 lg:grid lg:grid-cols-[272px_1fr] lg:gap-10">
+    <!-- FILTRE -->
+    <aside class="filtre" id="filtre" data-sertar aria-label="Filtre">
+      <div class="sertar-cap lg:hidden">
+        <p class="text-lg font-semibold text-ink">Filtre</p>
+        <button type="button" class="inchide" data-inchide-filtre aria-label="Închide filtrele"><Icon nume="inchide" marime={22} /></button>
+      </div>
+      <form data-filtre class="grid gap-7" onsubmit="return false">
+        <fieldset>
+          <legend class="grup-titlu">Tranzacție</legend>
+          <div class="segment w-full" style="grid-auto-columns:1fr">
+            <input type="radio" name="tranzactie" id="f-toate" value="" checked />
+            <label for="f-toate">Toate</label>
+            <input type="radio" name="tranzactie" id="f-vanzare" value="vanzare" />
+            <label for="f-vanzare">Cumpăr</label>
+            <input type="radio" name="tranzactie" id="f-inchiriere" value="inchiriere" />
+            <label for="f-inchiriere">Închiriez</label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend class="grup-titlu">Tip proprietate</legend>
+          <div class="grid gap-1">
+            {
+              tipuri.map((x) => (
+                <label class="bifa">
+                  <input type="checkbox" name="tip" value={x.t} />
+                  <span>{x.nume}</span>
+                  <span class="nr cifre">{x.nr}</span>
+                </label>
+              ))
+            }
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend class="grup-titlu">Cartier</legend>
+          <div class="grid gap-1">
+            {
+              cartiere.map((z) => (
+                <label class="bifa">
+                  <input type="checkbox" name="zona" value={z.slug} />
+                  <span>{z.nume}</span>
+                  <span class="nr cifre">{z.nr}</span>
+                </label>
+              ))
+            }
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend class="grup-titlu">Preț (€)</legend>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="sr-only" for="f-pmin">Preț minim</label>
+            <input class="camp cifre" id="f-pmin" name="pretMin" inputmode="numeric" placeholder="de la" />
+            <label class="sr-only" for="f-pmax">Preț maxim</label>
+            <input class="camp cifre" id="f-pmax" name="pretMax" inputmode="numeric" placeholder="până la" />
+          </div>
+          <p class="mt-2 text-xs text-ink-3">La închiriere, prețul e chiria pe lună.</p>
+        </fieldset>
+
+        <fieldset>
+          <legend class="grup-titlu">Camere</legend>
+          <div class="grid grid-cols-4 gap-2">
+            {
+              ['1', '2', '3', '4'].map((c) => (
+                <label class="cip">
+                  <input type="checkbox" name="camere" value={c} />
+                  <span>{c === '4' ? '4+' : c}</span>
+                </label>
+              ))
+            }
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend class="grup-titlu">Suprafață minimă</legend>
+          <select class="camp" name="mpMin">
+            <option value="">Oricât</option>
+            <option value="30">30 mp</option>
+            <option value="50">50 mp</option>
+            <option value="70">70 mp</option>
+            <option value="100">100 mp</option>
+            <option value="500">500 mp (terenuri)</option>
+          </select>
+        </fieldset>
+
+        <fieldset>
+          <legend class="grup-titlu">Doar</legend>
+          <div class="grid gap-1">
+            {
+              etichete.map((x) => (
+                <label class="bifa">
+                  <input type="checkbox" name="eticheta" value={x.e} />
+                  <span>{x.nume}</span>
+                  <span class="nr cifre">{x.nr}</span>
+                </label>
+              ))
+            }
+          </div>
+        </fieldset>
+
+        <button type="button" class="link-sub justify-self-start text-sm" data-reseteaza>Șterge toate filtrele</button>
+      </form>
+      <div class="sertar-jos lg:hidden">
+        <button type="button" class="btn btn-ink w-full" data-inchide-filtre>Arată <span data-numar-buton class="cifre">{oferte.length}</span> oferte</button>
+      </div>
+    </aside>
+
+    <!-- REZULTATE -->
+    <section aria-label="Rezultate">
+      <div class="bara">
+        <button type="button" class="btn btn-contur lg:hidden" data-deschide-filtre aria-controls="filtre">
+          <Icon nume="filtre" marime={18} /> Filtre <span class="cifre text-ink-3" data-nr-filtre></span>
+        </button>
+        <label class="sr-only" for="sort">Ordonează</label>
+        <select id="sort" class="camp w-auto" name="sort" data-sort>
+          <option value="noi">Cele mai noi</option>
+          <option value="pret-cresc">Preț crescător</option>
+          <option value="pret-desc">Preț descrescător</option>
+          <option value="mp-desc">Suprafață mare</option>
+        </select>
+        <div class="vedere ml-auto" role="group" aria-label="Mod de afișare">
+          <button type="button" data-vedere="lista" aria-pressed="true"><Icon nume="lista" marime={18} /><span>Listă</span></button>
+          <button type="button" data-vedere="harta" aria-pressed="false"><Icon nume="harta" marime={18} /><span>Hartă</span></button>
+        </div>
+      </div>
+
+      <p class="favorite-nota" data-favorite-nota hidden>
+        Afișezi doar ofertele salvate. <a href={cale('/oferte/')} class="link-sub">Vezi toate ofertele</a>
+      </p>
+
+      <div class="mt-6 grid gap-x-6 gap-y-11 sm:grid-cols-2 xl:grid-cols-3" data-rezultate>
+        {lista.map((o, i) => <OfertaCard o={o} prioritar={i < 3} />)}
+      </div>
+
+      <div class="harta-mare mt-6" data-harta-mare hidden>
+        <div class="h-full" data-harta role="region" aria-label="Harta ofertelor filtrate"></div>
+      </div>
+
+      <div class="gol" data-gol hidden>
+        <h2 class="text-xl">Nu avem încă o ofertă care să se potrivească</h2>
+        <p class="mt-2 max-w-lg text-ink-3">
+          Portofoliul se schimbă în fiecare săptămână. Spune-ne ce cauți și te sunăm noi când intră ceva potrivit,
+          de multe ori înainte să apară anunțul.
+        </p>
+        <div class="mt-5 flex flex-wrap gap-3">
+          <a class="btn btn-ink" data-cerere href={linkWhatsApp('Bună ziua! Caut o proprietate în Turda.')} target="_blank" rel="noopener"
+            ><Icon nume="whatsapp" marime={18} /> Lasă o cerere pe WhatsApp</a
+          >
+          <button type="button" class="btn btn-contur" data-reseteaza>Șterge filtrele</button>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="sertar-fundal" data-fundal hidden></div>
+  <script type="application/json" data-pini set:html={JSON.stringify(pini)} />
+</Baza>
+
+<style>
+  .grup-titlu {
+    margin-bottom: 10px;
+    color: var(--color-ink);
+    font-size: 0.95rem;
+    font-weight: 650;
+  }
+  .bifa {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 38px;
+    color: var(--color-ink-2);
+    cursor: pointer;
+  }
+  .bifa input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-ink);
+    flex-shrink: 0;
+  }
+  .bifa .nr {
+    margin-left: auto;
+    color: var(--color-ink-3);
+    font-size: 0.85rem;
+  }
+  .cip {
+    position: relative;
+  }
+  .cip input {
+    position: absolute;
+    opacity: 0;
+  }
+  .cip span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+    border: 1px solid var(--color-line-2);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--color-ink);
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background-color 150ms var(--ease-iesire),
+      border-color 150ms var(--ease-iesire);
+  }
+  .cip input:checked + span {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: #fff;
+  }
+  .cip input:focus-visible + span {
+    outline: 2px solid var(--color-brass);
+    outline-offset: 2px;
+  }
+  .bara {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--color-line);
+  }
+  .bara select {
+    min-width: 190px;
+  }
+  .vedere {
+    display: inline-flex;
+    padding: 4px;
+    border-radius: 10px;
+    background: var(--color-paper-2);
+  }
+  .vedere button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 0 12px;
+    border-radius: 7px;
+    color: var(--color-ink-2);
+    font-weight: 600;
+    font-size: 0.925rem;
+  }
+  .vedere button[aria-pressed='true'] {
+    background: #fff;
+    color: var(--color-ink);
+    box-shadow: 0 1px 2px rgb(19 35 46 / 0.12);
+  }
+  .harta-mare {
+    height: min(72svh, 720px);
+    min-height: 420px;
+    border-radius: var(--radius-panou);
+    overflow: hidden;
+    border: 1px solid var(--color-line);
+    background: #f1ede6;
+  }
+  .gol {
+    margin-top: 32px;
+    padding: 32px;
+    border-radius: var(--radius-panou);
+    background: var(--color-paper-2);
+  }
+  .favorite-nota {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: var(--color-brass-soft);
+    color: var(--color-ink);
+  }
+
+  /* Pe mobil filtrele sunt un sertar care intră din stânga. */
+  @media (max-width: 1023px) {
+    .filtre {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 60;
+      width: min(360px, 88vw);
+      display: flex;
+      flex-direction: column;
+      background: var(--color-paper);
+      transform: translateX(-105%);
+      transition: transform 250ms var(--ease-iesire);
+      visibility: hidden;
+    }
+    .filtre.deschis {
+      transform: none;
+      visibility: visible;
+    }
+    .filtre form {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 20px 24px;
+    }
+    .sertar-cap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 12px 14px 20px;
+      border-bottom: 1px solid var(--color-line);
+    }
+    .sertar-jos {
+      padding: 14px 20px;
+      border-top: 1px solid var(--color-line);
+      background: #fff;
+    }
+    .inchide {
+      display: inline-flex;
+      width: 44px;
+      height: 44px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      color: var(--color-ink);
+    }
+    .sertar-fundal {
+      position: fixed;
+      inset: 0;
+      z-index: 55;
+      background: rgb(9 18 25 / 0.45);
+    }
+  }
+  @media (min-width: 1024px) {
+    .filtre {
+      align-self: start;
+    }
+  }
+</style>
+
+<script>
+  import { citesteFavorite, leagaButoaneFavorite } from '../../lib/favorite';
+  import { numeTip, numeZona } from '../../lib/oferta';
+  import type { PinOferta } from '../../lib/harta';
+
+  type Stare = {
+    tranzactie: string;
+    tip: string[];
+    zona: string[];
+    pretMin: string;
+    pretMax: string;
+    camere: string[];
+    mpMin: string;
+    eticheta: string[];
+    sort: string;
+    vedere: string;
+    favorite: boolean;
+  };
+
+  const form = document.querySelector<HTMLFormElement>('[data-filtre]')!;
+  const grila = document.querySelector<HTMLElement>('[data-rezultate]')!;
+  const carduri = [...grila.querySelectorAll<HTMLElement>('[data-card]')];
+  const sort = document.querySelector<HTMLSelectElement>('[data-sort]')!;
+  const multe = ['tip', 'zona', 'camere', 'eticheta'] as const;
+
+  function citesteUrl(): Stare {
+    const q = new URLSearchParams(location.search);
+    const lista = (k: string) => (q.get(k) || '').split(',').filter(Boolean);
+    return {
+      tranzactie: q.get('tranzactie') || '',
+      tip: lista('tip'),
+      zona: lista('zona'),
+      pretMin: q.get('pretMin') || '',
+      pretMax: q.get('pretMax') || '',
+      camere: lista('camere'),
+      mpMin: q.get('mpMin') || '',
+      eticheta: lista('eticheta'),
+      sort: q.get('sort') || 'noi',
+      vedere: q.get('vedere') || 'lista',
+      favorite: q.get('favorite') === '1',
+    };
+  }
+
+  function citesteForm(s: Stare): Stare {
+    const f = new FormData(form);
+    return {
+      ...s,
+      tranzactie: String(f.get('tranzactie') || ''),
+      tip: f.getAll('tip').map(String),
+      zona: f.getAll('zona').map(String),
+      pretMin: String(f.get('pretMin') || '').replace(/\D/g, ''),
+      pretMax: String(f.get('pretMax') || '').replace(/\D/g, ''),
+      camere: f.getAll('camere').map(String),
+      mpMin: String(f.get('mpMin') || ''),
+      eticheta: f.getAll('eticheta').map(String),
+      sort: sort.value,
+    };
+  }
+
+  function scrieForm(s: Stare) {
+    form.querySelectorAll<HTMLInputElement>('[name="tranzactie"]').forEach((i) => (i.checked = i.value === s.tranzactie));
+    for (const k of multe) {
+      form.querySelectorAll<HTMLInputElement>(`[name="${k}"]`).forEach((i) => (i.checked = s[k].includes(i.value)));
+    }
+    (form.elements.namedItem('pretMin') as HTMLInputElement).value = s.pretMin;
+    (form.elements.namedItem('pretMax') as HTMLInputElement).value = s.pretMax;
+    (form.elements.namedItem('mpMin') as HTMLSelectElement).value = s.mpMin;
+    sort.value = s.sort;
+  }
+
+  function scrieUrl(s: Stare) {
+    const q = new URLSearchParams();
+    if (s.tranzactie) q.set('tranzactie', s.tranzactie);
+    for (const k of multe) if (s[k].length) q.set(k, s[k].join(','));
+    if (s.pretMin) q.set('pretMin', s.pretMin);
+    if (s.pretMax) q.set('pretMax', s.pretMax);
+    if (s.mpMin) q.set('mpMin', s.mpMin);
+    if (s.sort !== 'noi') q.set('sort', s.sort);
+    if (s.vedere !== 'lista') q.set('vedere', s.vedere);
+    if (s.favorite) q.set('favorite', '1');
+    history.replaceState(null, '', `${location.pathname}${q.size ? `?${q}` : ''}`);
+  }
+
+  function potrivire(c: HTMLElement, s: Stare, salvate: Set<string>): boolean {
+    const d = c.dataset;
+    const pret = Number(d.pret);
+    const camere = Number(d.camere);
+    if (s.favorite && !salvate.has(d.id!)) return false;
+    if (s.tranzactie && d.tranzactie !== s.tranzactie) return false;
+    if (s.tip.length && !s.tip.includes(d.tip!)) return false;
+    if (s.zona.length && !s.zona.includes(d.zona!)) return false;
+    if (s.pretMin && pret < Number(s.pretMin)) return false;
+    if (s.pretMax && pret > Number(s.pretMax)) return false;
+    if (s.camere.length && !s.camere.some((c) => (c === '4' ? camere >= 4 : camere === Number(c)))) return false;
+    if (s.mpMin && Number(d.suprafata) < Number(s.mpMin)) return false;
+    if (s.eticheta.length && !s.eticheta.every((e) => d.etichete!.split(' ').includes(e))) return false;
+    return true;
+  }
+
+  const comparatori: Record<string, (a: HTMLElement, b: HTMLElement) => number> = {
+    noi: (a, b) => b.dataset.adaugat!.localeCompare(a.dataset.adaugat!),
+    'pret-cresc': (a, b) => Number(a.dataset.pret) - Number(b.dataset.pret),
+    'pret-desc': (a, b) => Number(b.dataset.pret) - Number(a.dataset.pret),
+    'mp-desc': (a, b) => Number(b.dataset.suprafata) - Number(a.dataset.suprafata),
+  };
+
+  /** Titlul paginii urmează filtrele: „Apartamente de vânzare în Micro 3”. */
+  function titlu(s: Stare): string {
+    if (s.favorite) return 'Ofertele salvate';
+    const doarLocuinte = s.tip.length > 0 && s.tip.every((t) => t === 'apartament' || t === 'garsoniera');
+    const tip =
+      s.tip.length === 1
+        ? numeTip[s.tip[0] as keyof typeof numeTip].multe
+        : doarLocuinte
+          ? 'Apartamente și garsoniere'
+          : s.tip.length
+            ? 'Proprietăți'
+            : 'Oferte imobiliare';
+    const tr = s.tranzactie === 'vanzare' ? ' de vânzare' : s.tranzactie === 'inchiriere' ? ' de închiriat' : '';
+    const loc = s.zona.length === 1 ? (s.zona[0] === 'mihai-viteazu' ? ' în Mihai Viteazu' : ` în ${numeZona(s.zona[0])}, Turda`) : ' în Turda';
+    return `${tip}${tr}${loc}`;
+  }
+
+  let stare = citesteUrl();
+  let harta: { arata: (ids: Set<string>) => void } | null = null;
+
+  function aplica() {
+    const salvate = new Set(citesteFavorite());
+    const vizibile = carduri.filter((c) => potrivire(c, stare, salvate));
+    const setViz = new Set(vizibile.map((c) => c.dataset.id!));
+    carduri.forEach((c) => (c.hidden = !setViz.has(c.dataset.id!)));
+    [...carduri].sort(comparatori[stare.sort] ?? comparatori.noi).forEach((c) => grila.appendChild(c));
+
+    const n = vizibile.length;
+    document.querySelector('[data-numar]')!.textContent = String(n);
+    document.querySelector('[data-numar-text]')!.textContent = n === 1 ? 'ofertă' : 'oferte';
+    document.querySelector('[data-numar-buton]')!.textContent = String(n);
+    const t = titlu(stare);
+    document.querySelector('[data-titlu]')!.textContent = t;
+    document.title = `${t} · Elanis Imobiliare`;
+
+    const activeFiltre =
+      (stare.tranzactie ? 1 : 0) + multe.reduce((a, k) => a + stare[k].length, 0) + (stare.pretMin ? 1 : 0) + (stare.pretMax ? 1 : 0) + (stare.mpMin ? 1 : 0);
+    document.querySelector('[data-nr-filtre]')!.textContent = activeFiltre ? `(${activeFiltre})` : '';
+    document.querySelector<HTMLElement>('[data-favorite-nota]')!.hidden = !stare.favorite;
+
+    const lista = stare.vedere === 'lista';
+    document.querySelector<HTMLElement>('[data-gol]')!.hidden = n > 0;
+    grila.hidden = !lista || n === 0;
+    document.querySelector<HTMLElement>('[data-harta-mare]')!.hidden = lista;
+    document.querySelectorAll<HTMLButtonElement>('[data-vedere]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.vedere === stare.vedere)));
+    if (!lista) pornesteHarta().then((h) => h.arata(setViz));
+
+    // Cererea de căutare din starea goală pleacă cu filtrele completate.
+    const cerere = document.querySelector<HTMLAnchorElement>('[data-cerere]')!;
+    const u = new URL(cerere.href);
+    u.searchParams.set('text', `Bună ziua! Caut: ${t.toLowerCase()}${stare.pretMax ? `, buget până la ${stare.pretMax} €` : ''}. Mă puteți suna când apare ceva?`);
+    cerere.href = u.toString();
+
+    scrieUrl(stare);
+  }
+
+  async function pornesteHarta() {
+    if (harta) return harta;
+    const { adaugaPini, creeazaHarta, grupeaza, incadreaza } = await import('../../lib/harta');
+    const pini = JSON.parse(document.querySelector('[data-pini]')!.textContent!) as PinOferta[];
+    const map = creeazaHarta(document.querySelector<HTMLElement>('[data-harta]')!, { cooperativ: false });
+    const gata = new Promise<void>((r) => map.on('load', () => r()));
+    let dupaId: ReturnType<typeof adaugaPini>;
+    let permise = new Set<string>();
+    let regrupeaza: () => void;
+    harta = {
+      arata(ids) {
+        permise = ids;
+        gata.then(() => {
+          dupaId ??= adaugaPini(map, pini);
+          regrupeaza ??= grupeaza(map, pini, dupaId, () => permise);
+          map.resize();
+          for (const p of pini) dupaId.get(p.id)!.el.style.display = ids.has(p.id) ? '' : 'none';
+          regrupeaza();
+          incadreaza(map, pini.filter((p) => ids.has(p.id)).map((p) => p.coord), 70);
+        });
+      },
+    };
+    return harta;
+  }
+
+  scrieForm(stare);
+  aplica();
+  leagaButoaneFavorite();
+
+  form.addEventListener('input', () => {
+    stare = citesteForm(stare);
+    aplica();
+  });
+  form.addEventListener('change', () => {
+    stare = citesteForm(stare);
+    aplica();
+  });
+  sort.addEventListener('change', () => {
+    stare = citesteForm(stare);
+    aplica();
+  });
+  document.querySelectorAll<HTMLButtonElement>('[data-vedere]').forEach((b) =>
+    b.addEventListener('click', () => {
+      stare.vedere = b.dataset.vedere!;
+      aplica();
+    }),
+  );
+  document.querySelectorAll('[data-reseteaza]').forEach((b) =>
+    b.addEventListener('click', () => {
+      stare = { ...citesteUrl(), tranzactie: '', tip: [], zona: [], pretMin: '', pretMax: '', camere: [], mpMin: '', eticheta: [], favorite: false };
+      scrieForm(stare);
+      aplica();
+    }),
+  );
+  window.addEventListener('favorite-schimbat', () => stare.favorite && aplica());
+
+  // Sertarul de filtre de pe mobil.
+  const sertar = document.querySelector<HTMLElement>('[data-sertar]')!;
+  const fundal = document.querySelector<HTMLElement>('[data-fundal]')!;
+  const deschide = document.querySelector<HTMLButtonElement>('[data-deschide-filtre]')!;
+  function sertarDeschis(da: boolean) {
+    sertar.classList.toggle('deschis', da);
+    fundal.hidden = !da;
+    deschide.setAttribute('aria-expanded', String(da));
+    document.documentElement.style.overflow = da ? 'hidden' : '';
+    if (da) sertar.querySelector<HTMLElement>('input, select, button')?.focus();
+    else deschide.focus();
+  }
+  deschide.addEventListener('click', () => sertarDeschis(true));
+  fundal.addEventListener('click', () => sertarDeschis(false));
+  document.querySelectorAll('[data-inchide-filtre]').forEach((b) => b.addEventListener('click', () => sertarDeschis(false)));
+  document.addEventListener('keydown', (e) => e.key === 'Escape' && sertar.classList.contains('deschis') && sertarDeschis(false));
+</script>

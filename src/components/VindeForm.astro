@@ -1,0 +1,154 @@
+---
+import Icon from './Icon.astro';
+import { firma } from '../data/firma';
+// Formularul nu are backend în demo: compune mesajul și îl deschide în WhatsApp.
+// TODO(real): se salvează și în CRM / se trimite pe e-mail prin Resend.
+---
+
+<form class="vinde" data-vinde novalidate>
+  <fieldset>
+    <legend class="eticheta-camp">Vreau să</legend>
+    <div class="segment w-full">
+      <input type="radio" name="scop" id="v-vand" value="vând" checked />
+      <label for="v-vand">Vând</label>
+      <input type="radio" name="scop" id="v-inchiriez" value="dau în chirie" />
+      <label for="v-inchiriez">Dau în chirie</label>
+    </div>
+  </fieldset>
+
+  <div class="grid gap-3.5 sm:grid-cols-2">
+    <div>
+      <label class="eticheta-camp" for="v-tip">Proprietatea</label>
+      <select class="camp" id="v-tip" name="tip">
+        <option>Apartament</option>
+        <option>Garsonieră</option>
+        <option>Casă</option>
+        <option>Teren</option>
+        <option>Spațiu comercial</option>
+      </select>
+    </div>
+    <div>
+      <label class="eticheta-camp" for="v-zona">Cartier sau localitate</label>
+      <input class="camp" id="v-zona" name="zona" placeholder="ex. Micro 3" autocomplete="off" />
+    </div>
+    <div>
+      <label class="eticheta-camp" for="v-mp">Suprafață (mp)</label>
+      <input class="camp cifre" id="v-mp" name="mp" inputmode="numeric" placeholder="ex. 52" />
+    </div>
+    <div>
+      <label class="eticheta-camp" for="v-camere">Camere</label>
+      <select class="camp" id="v-camere" name="camere">
+        <option value="">Nu e cazul</option>
+        <option>1</option>
+        <option selected>2</option>
+        <option>3</option>
+        <option>4 sau mai multe</option>
+      </select>
+    </div>
+    <div>
+      <label class="eticheta-camp" for="v-nume">Numele tău</label>
+      <input class="camp" id="v-nume" name="nume" autocomplete="name" required />
+      <p class="eroare" data-eroare="nume" hidden>Spune-ne cum să te strigăm.</p>
+    </div>
+    <div>
+      <label class="eticheta-camp" for="v-tel">Telefon</label>
+      <input class="camp cifre" id="v-tel" name="telefon" type="tel" autocomplete="tel" inputmode="tel" required />
+      <p class="eroare" data-eroare="telefon" hidden>Avem nevoie de un număr valid, ca să te sunăm.</p>
+    </div>
+  </div>
+
+  <div>
+    <label class="eticheta-camp" for="v-detalii">Ceva ce ar trebui să știm <span class="font-normal text-ink-3">(opțional)</span></label>
+    <textarea class="camp" id="v-detalii" name="detalii" rows="3" placeholder="ex. etaj 2, renovat în 2021, liber din noiembrie"></textarea>
+  </div>
+
+  <button type="submit" class="btn btn-ink w-full">
+    <Icon nume="whatsapp" marime={19} />
+    Trimite pe WhatsApp
+  </button>
+  <p class="text-center text-sm text-ink-3">
+    sau sună direct la <a class="link-sub cifre" href={firma.telefonLink}>{firma.telefon}</a>
+  </p>
+  <p class="multumim" data-multumim hidden role="status">
+    Mulțumim! S-a deschis WhatsApp cu mesajul completat. Dacă nu s-a deschis, sună-ne la {firma.telefon}.
+  </p>
+</form>
+
+<style>
+  .vinde {
+    display: grid;
+    gap: 16px;
+    padding: 22px;
+    border-radius: var(--radius-panou);
+    background: #fff;
+    box-shadow: var(--shadow-panou);
+  }
+  @media (min-width: 768px) {
+    .vinde {
+      padding: 30px;
+    }
+  }
+  .eroare {
+    margin-top: 6px;
+    color: #8a2f1d;
+    font-size: 0.85rem;
+  }
+  .camp[aria-invalid='true'] {
+    border-color: #8a2f1d;
+  }
+  .multumim {
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: var(--color-brass-soft);
+    color: var(--color-ink);
+    font-size: 0.925rem;
+  }
+</style>
+
+<script>
+  import { linkWhatsApp } from '../data/firma';
+
+  document.querySelectorAll<HTMLFormElement>('[data-vinde]').forEach((form) => {
+    const camp = (n: string) => form.elements.namedItem(n) as HTMLInputElement;
+
+    function valid(): boolean {
+      let ok = true;
+      const reguli: Record<string, (v: string) => boolean> = {
+        nume: (v) => v.trim().length >= 2,
+        telefon: (v) => v.replace(/\D/g, '').length >= 10,
+      };
+      for (const [n, test] of Object.entries(reguli)) {
+        const bun = test(camp(n).value);
+        camp(n).setAttribute('aria-invalid', String(!bun));
+        form.querySelector<HTMLElement>(`[data-eroare="${n}"]`)!.hidden = bun;
+        if (!bun && ok) camp(n).focus();
+        ok &&= bun;
+      }
+      return ok;
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!valid()) return;
+      const f = new FormData(form);
+      const rand = (k: string, eticheta: string) => (f.get(k) ? `${eticheta}: ${f.get(k)}\n` : '');
+      const mesaj =
+        `Bună ziua! Vreau să ${f.get('scop')} o proprietate prin Elanis.\n\n` +
+        rand('tip', 'Proprietate') +
+        rand('zona', 'Zona') +
+        rand('mp', 'Suprafață (mp)') +
+        rand('camere', 'Camere') +
+        rand('detalii', 'Detalii') +
+        `\n${f.get('nume')}, ${f.get('telefon')}`;
+      window.open(linkWhatsApp(mesaj), '_blank', 'noopener');
+      form.querySelector<HTMLElement>('[data-multumim]')!.hidden = false;
+    });
+    form.addEventListener('input', (e) => {
+      const t = e.target as HTMLInputElement;
+      if (t.getAttribute('aria-invalid') === 'true') {
+        t.removeAttribute('aria-invalid');
+        form.querySelector<HTMLElement>(`[data-eroare="${t.name}"]`)?.setAttribute('hidden', '');
+      }
+    });
+  });
+</script>

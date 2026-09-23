@@ -1,0 +1,115 @@
+---
+import Baza from '../layouts/Baza.astro';
+import VindeForm from '../components/VindeForm.astro';
+import { oferte } from '../data/oferte';
+import { cale, pozaUrl } from '../lib/oferta';
+
+const exclusiv = oferte.filter((o) => o.etichete.includes('exclusivitate')).length;
+
+const intrebari = [
+  {
+    q: 'Cât costă evaluarea?',
+    a: 'Nimic. Venim la proprietate, ne uităm la ce s-a vândut recent în același cartier și îți spunem un preț la care se vinde, nu un preț care sună bine.',
+  },
+  {
+    q: 'Cât e comisionul?',
+    a: 'Comisionul se stabilește la semnarea contractului de intermediere și îl plătești doar dacă se vinde. La unele proprietăți îl preia cumpărătorul sau dezvoltatorul.',
+  },
+  {
+    q: 'Trebuie să semnez exclusivitate?',
+    a: `Nu e obligatoriu. Exclusivitatea ne permite însă să investim mai mult în promovare, de aceea o recomandăm. Acum avem ${exclusiv} proprietăți în exclusivitate.`,
+  },
+  {
+    q: 'Ce acte îmi trebuie?',
+    a: 'Actul de proprietate, extrasul de carte funciară, certificatul energetic și, la apartamente, adeverința de la asociație. Dacă îți lipsește ceva, te ajutăm să-l obții.',
+  },
+];
+---
+
+<Baza titlu="Vinde sau închiriază prin Elanis Imobiliare · Turda" descriere="Evaluare gratuită, poze și anunț pe toate portalurile, vizionări programate și asistență până la notar. Elanis Imobiliare, Turda.">
+  <div class="container-site pt-8 md:pt-12">
+    <nav aria-label="Pesmet" class="text-sm text-ink-3">
+      <a href={cale('/')} class="hover:text-ink">Acasă</a> <span aria-hidden="true" class="mx-1.5">/</span> <span>Vinde prin Elanis</span>
+    </nav>
+    <div class="mt-6 grid gap-12 lg:grid-cols-12">
+      <div class="lg:col-span-5">
+        <h1 class="text-[clamp(2rem,1.3rem+2.6vw,3.2rem)]">Vinde sau dă în chirie prin Elanis</h1>
+        <p class="mt-5 max-w-md text-[1.075rem] leading-relaxed">
+          Completează formularul în două minute sau sună-ne. Venim la evaluare, gratuit, de obicei în aceeași
+          săptămână.
+        </p>
+        <figure class="mt-8">
+          <img
+            src={pozaUrl('ap3-micro3-living', 1600)}
+            alt="Living luminos într-un apartament renovat din Micro 3"
+            width="1600"
+            height="1200"
+            class="aspect-[4/3] w-full rounded-md object-cover"
+            loading="eager"
+          />
+          <figcaption class="mt-2 text-sm text-ink-3">
+            Pozele le facem noi, pe lumină bună, cu camerele pregătite pentru vizionare.
+          </figcaption>
+        </figure>
+      </div>
+      <div class="lg:col-span-6 lg:col-start-7">
+        <VindeForm />
+      </div>
+    </div>
+
+    <section class="mt-20 max-w-3xl md:mt-28" aria-labelledby="faq-titlu">
+      <h2 id="faq-titlu" class="titlu-sectiune">Întrebări pe care ni le pun proprietarii</h2>
+      <div class="faq mt-8">
+        {
+          intrebari.map((x) => (
+            <details>
+              <summary>{x.q}</summary>
+              <p>{x.a}</p>
+            </details>
+          ))
+        }
+      </div>
+    </section>
+  </div>
+</Baza>
+
+<style>
+  .faq {
+    border-top: 1px solid var(--color-line);
+  }
+  .faq details {
+    border-bottom: 1px solid var(--color-line);
+  }
+  .faq summary {
+    position: relative;
+    display: block;
+    padding: 1.1rem 2.5rem 1.1rem 0;
+    color: var(--color-ink);
+    font-size: 1.075rem;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+  }
+  .faq summary::-webkit-details-marker {
+    display: none;
+  }
+  .faq summary::after {
+    content: '+';
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-brass-ink);
+    font-size: 1.6rem;
+    font-weight: 400;
+    transition: transform 200ms var(--ease-iesire);
+  }
+  .faq details[open] summary::after {
+    transform: translateY(-50%) rotate(45deg);
+  }
+  .faq p {
+    max-width: 62ch;
+    padding: 0 0 1.25rem;
+    line-height: 1.7;
+  }
+</style>

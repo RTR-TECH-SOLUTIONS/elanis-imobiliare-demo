@@ -1,0 +1,204 @@
+---
+import type { Oferta } from '../data/oferte';
+import { zone } from '../data/zone';
+import { cale, numar, pinOferta } from '../lib/oferta';
+
+interface Props {
+  oferte: Oferta[];
+}
+const { oferte } = Astro.props;
+
+// Rezumatul pe cartiere: câte oferte și de la ce preț (la vânzare).
+const cartiere = zone
+  .map((z) => {
+    const aici = oferte.filter((o) => o.zona === z.slug);
+    const vanzare = aici.filter((o) => o.tranzactie === 'vanzare').map((o) => o.pret);
+    return { ...z, nr: aici.length, dela: vanzare.length ? Math.min(...vanzare) : undefined, chirii: aici.length - vanzare.length };
+  })
+  .filter((z) => z.nr > 0);
+
+const pini = oferte.map(pinOferta);
+---
+
+<div class="harta-cartiere" data-harta-cartiere>
+  <div class="lista">
+    <ul role="list">
+      {
+        cartiere.map((z) => (
+          <li>
+            <button type="button" class="cartier" data-zona={z.slug} data-centru={JSON.stringify(z.centru)}>
+              <span class="nume">{z.nume}</span>
+              <span class="det cifre">
+                {z.nr === 1 ? '1 ofertă' : `${z.nr} oferte`}
+                {z.dela && <> · de la {numar(z.dela)} €</>}
+                {!z.dela && z.chirii > 0 && <> · de închiriat</>}
+              </span>
+            </button>
+          </li>
+        ))
+      }
+    </ul>
+    <a href={cale('/oferte/?vedere=harta')} class="link-sub mt-5 inline-block">Deschide harta mare, cu filtre</a>
+  </div>
+  <div class="cadru">
+    <div class="harta" data-harta role="region" aria-label="Harta ofertelor din Turda"></div>
+    <p class="nota">Pinii arată zona, nu adresa. Adresa exactă o primești când programezi vizionarea.</p>
+  </div>
+  <script type="application/json" data-pini set:html={JSON.stringify(pini)} />
+</div>
+
+<style>
+  .harta-cartiere {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+  .lista {
+    min-width: 0;
+  }
+  .cadru {
+    position: relative;
+  }
+  .harta {
+    height: 420px;
+    border-radius: var(--radius-panou);
+    overflow: hidden;
+    background: #f1ede6;
+    border: 1px solid var(--color-line);
+  }
+  .nota {
+    margin-top: 10px;
+    color: var(--color-ink-3);
+    font-size: 0.875rem;
+  }
+  .lista ul {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scrollbar-width: thin;
+  }
+  .cartier {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    min-width: 150px;
+    padding: 12px 14px;
+    border: 1px solid var(--color-line);
+    border-radius: 8px;
+    background: #fff;
+    text-align: left;
+    transition:
+      border-color 150ms var(--ease-iesire),
+      background-color 150ms var(--ease-iesire);
+  }
+  .cartier:hover,
+  .cartier[aria-pressed='true'] {
+    border-color: var(--color-ink);
+  }
+  .cartier[aria-pressed='true'] {
+    background: var(--color-ink);
+  }
+  .cartier[aria-pressed='true'] .nume,
+  .cartier[aria-pressed='true'] .det {
+    color: #fff;
+  }
+  .nume {
+    color: var(--color-ink);
+    font-weight: 650;
+  }
+  .det {
+    color: var(--color-ink-3);
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+  @media (min-width: 1024px) {
+    .harta-cartiere {
+      grid-template-columns: 300px minmax(0, 1fr);
+      gap: 32px;
+      align-items: start;
+    }
+    .lista ul {
+      flex-direction: column;
+      overflow: visible;
+      gap: 0;
+      border-top: 1px solid var(--color-line);
+    }
+    .cartier {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      padding: 13px 10px;
+      border: 0;
+      border-bottom: 1px solid var(--color-line);
+      border-radius: 0;
+      background: transparent;
+    }
+    .cartier[aria-pressed='true'] {
+      border-radius: 6px;
+    }
+    .harta {
+      height: 540px;
+    }
+  }
+</style>
+
+<script>
+  import type { PinOferta } from '../lib/harta';
+
+  document.querySelectorAll<HTMLElement>('[data-harta-cartiere]').forEach((rad) => {
+    const el = rad.querySelector<HTMLElement>('[data-harta]')!;
+    const pini = JSON.parse(rad.querySelector('[data-pini]')!.textContent!) as (PinOferta & { zona: string })[];
+    let pornita = false;
+
+    // Harta (MapLibre, ~250 kB gzip) se descarcă abia când se apropie de ecran.
+    const io = new IntersectionObserver(
+      async (x) => {
+        if (!x[0].isIntersecting || pornita) return;
+        pornita = true;
+        io.disconnect();
+        const { adaugaPini, creeazaHarta, grupeaza, incadreaza } = await import('../lib/harta');
+        const map = creeazaHarta(el);
+        map.on('load', () => {
+          const dupaId = adaugaPini(map, pini);
+          incadreaza(map, pini.map((p) => p.coord), 50);
+          grupeaza(map, pini, dupaId);
+
+          const butoane = rad.querySelectorAll<HTMLButtonElement>('[data-zona]');
+          const evidentiaza = (zona: string | null) => {
+            for (const p of pini) {
+              const pin = dupaId.get(p.id)!.el;
+              pin.classList.toggle('evidentiat', zona !== null && p.zona === zona);
+              pin.classList.toggle('stins', zona !== null && p.zona !== zona);
+            }
+          };
+          butoane.forEach((b) => {
+            b.addEventListener('mouseenter', () => evidentiaza(b.dataset.zona!));
+            b.addEventListener('mouseleave', () => {
+              const activ = rad.querySelector<HTMLButtonElement>('[data-zona][aria-pressed="true"]');
+              evidentiaza(activ?.dataset.zona ?? null);
+            });
+            b.addEventListener('click', () => {
+              const eraActiv = b.getAttribute('aria-pressed') === 'true';
+              butoane.forEach((x) => x.setAttribute('aria-pressed', 'false'));
+              if (eraActiv) {
+                evidentiaza(null);
+                incadreaza(map, pini.map((p) => p.coord), 50);
+                return;
+              }
+              b.setAttribute('aria-pressed', 'true');
+              evidentiaza(b.dataset.zona!);
+              const dinZona = pini.filter((p) => p.zona === b.dataset.zona).map((p) => p.coord);
+              if (dinZona.length > 1) incadreaza(map, dinZona, 90);
+              else map.flyTo({ center: JSON.parse(b.dataset.centru!), zoom: 14.6, duration: 800 });
+            });
+          });
+        });
+      },
+      { rootMargin: '300px' },
+    );
+    io.observe(el);
+  });
+</script>

@@ -1,0 +1,69 @@
+---
+import Baza from '../layouts/Baza.astro';
+import Icon from '../components/Icon.astro';
+import { firma, linkWhatsApp } from '../data/firma';
+import { cale } from '../lib/oferta';
+---
+
+<Baza titlu="Contact · Elanis Imobiliare, Turda" descriere={`Sună la ${firma.telefon} sau scrie-ne pe WhatsApp. Elanis Imobiliare, Turda și împrejurimi.`}>
+  <div class="container-site pt-8 md:pt-12">
+    <nav aria-label="Pesmet" class="text-sm text-ink-3">
+      <a href={cale('/')} class="hover:text-ink">Acasă</a> <span aria-hidden="true" class="mx-1.5">/</span> <span>Contact</span>
+    </nav>
+    <div class="mt-6 grid gap-12 lg:grid-cols-2 lg:gap-20">
+      <div>
+        <h1 class="text-[clamp(2rem,1.3rem+2.6vw,3.2rem)]">Vorbim la telefon, ne vedem la vizionare</h1>
+        <p class="mt-5 max-w-md text-[1.075rem] leading-relaxed">
+          Cel mai repede ne prinzi la telefon sau pe WhatsApp. Pentru o ofertă anume, spune-ne ID-ul din anunț și
+          îți răspundem pe loc.
+        </p>
+        <a href={firma.telefonLink} class="telefon-mare cifre mt-10 inline-block">{firma.telefon}</a>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <a href={firma.telefonLink} class="btn btn-ink"><Icon nume="telefon" marime={18} /> Sună acum</a>
+          <a href={linkWhatsApp('Bună ziua! Vă scriu de pe site-ul Elanis Imobiliare.')} class="btn btn-contur" target="_blank" rel="noopener"
+            ><Icon nume="whatsapp" marime={18} /> WhatsApp</a
+          >
+        </div>
+      </div>
+
+      <div class="panou">
+        <dl class="fisa" style="grid-template-columns:1fr">
+          <div><dt>Telefon</dt><dd><a class="cifre" href={firma.telefonLink}>{firma.telefon}</a></dd></div>
+          <div><dt>E-mail</dt><dd><a href={`mailto:${firma.email}`}>{firma.email}</a></dd></div>
+          <div><dt>Zonă</dt><dd>{firma.zona}</dd></div>
+          {firma.program.map((p) => <div><dt>{p.zile}</dt><dd>{p.ore}</dd></div>)}
+          <div><dt>Facebook</dt><dd><a href={firma.facebook} target="_blank" rel="noopener">Elanis Imobiliare</a></dd></div>
+          <div><dt>TikTok</dt><dd><a href={firma.tiktok} target="_blank" rel="noopener">@elanis.imobiliare</a></dd></div>
+        </dl>
+        <p class="mt-5 text-sm text-ink-3">
+          {/* TODO(real): adresa biroului și harta, după ce o confirmă clientul */}
+          Adresa biroului o completăm aici. Până atunci, venim noi la tine sau ne vedem direct la proprietate.
+        </p>
+      </div>
+    </div>
+  </div>
+</Baza>
+
+<style>
+  .telefon-mare {
+    color: var(--color-ink);
+    font-size: clamp(2.2rem, 1.5rem + 3vw, 3.8rem);
+    font-weight: 700;
+    font-stretch: 115%;
+    line-height: 1;
+    padding-bottom: 8px;
+    border-bottom: 3px solid var(--color-brass);
+  }
+  .panou {
+    padding: 28px;
+    border-radius: var(--radius-panou);
+    background: #fff;
+    box-shadow: var(--shadow-panou);
+    align-self: start;
+  }
+  .panou a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--color-brass);
+    text-underline-offset: 3px;
+  }
+</style>

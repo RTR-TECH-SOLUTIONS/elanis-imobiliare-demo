@@ -1,0 +1,385 @@
+---
+import Baza from '../../layouts/Baza.astro';
+import Galerie from '../../components/Galerie.astro';
+import OfertaCard from '../../components/OfertaCard.astro';
+import CalculatorRata from '../../components/CalculatorRata.astro';
+import Icon from '../../components/Icon.astro';
+import { oferte, type Oferta } from '../../data/oferte';
+import { firma, linkWhatsApp } from '../../data/firma';
+import { cale, dataScurta, locText, numar, numeEticheta, numeTip, numeTranzactie, pretMp, pretText } from '../../lib/oferta';
+
+export function getStaticPaths() {
+  return oferte.map((o) => ({ params: { slug: o.slug }, props: { o } }));
+}
+
+const { o } = Astro.props as { o: Oferta };
+const mp = pretMp(o);
+const mesaj = `Bună ziua! Mă interesează oferta ${o.id}: ${o.titlu}. Când se poate vedea?`;
+
+const fisa: [string, string | undefined][] = [
+  ['Tip', `${numeTip[o.tip].unu} ${numeTranzactie[o.tranzactie]}`],
+  ['Zonă', locText(o.zona)],
+  ['Camere', o.camere ? String(o.camere) : undefined],
+  ['Băi', o.bai ? String(o.bai) : undefined],
+  ['Suprafață utilă', o.suprafata ? `${o.suprafata} mp` : undefined],
+  ['Teren', o.teren ? `${numar(o.teren)} mp` : undefined],
+  ['Etaj', o.etaj],
+  ['Compartimentare', o.compartimentare],
+  ['An construcție', o.an],
+  ['Stare', o.stare],
+  ['Preț pe mp', mp],
+  ['ID anunț', o.id],
+];
+
+// Oferte asemănătoare: același tip de proprietate întâi, apoi aceeași tranzacție.
+const asemanatoare = oferte
+  .filter((x) => x.id !== o.id)
+  .map((x) => ({ x, scor: (x.tip === o.tip ? 2 : 0) + (x.tranzactie === o.tranzactie ? 1 : 0) + (x.zona === o.zona ? 1 : 0) }))
+  .sort((a, b) => b.scor - a.scor)
+  .slice(0, 3)
+  .map((a) => a.x);
+
+const listaTip = cale(`/oferte/?tranzactie=${o.tranzactie}&tip=${o.tip}`);
+---
+
+<Baza titlu={`${o.titlu} · ${pretText(o)} · Elanis Imobiliare`} descriere={o.descriere[0]}>
+  <div class="container-site pt-6 md:pt-10">
+    <nav aria-label="Pesmet" class="text-sm text-ink-3">
+      <a href={cale('/')} class="hover:text-ink">Acasă</a>
+      <span aria-hidden="true" class="mx-1.5">/</span>
+      <a href={cale('/oferte/')} class="hover:text-ink">Oferte</a>
+      <span aria-hidden="true" class="mx-1.5">/</span>
+      <a href={listaTip} class="hover:text-ink">{numeTip[o.tip].multe} {numeTranzactie[o.tranzactie]}</a>
+    </nav>
+
+    <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
+      <div class="max-w-3xl">
+        {
+          o.etichete.length > 0 && (
+            <div class="mb-3 flex flex-wrap gap-1.5">
+              {o.etichete.map((e) => (
+                <span class:list={['eticheta', `eticheta-${e}`, e === 'nou' && 'border border-line']}>{numeEticheta[e]}</span>
+              ))}
+            </div>
+          )
+        }
+        <h1 class="text-[clamp(1.6rem,1.15rem+1.9vw,2.5rem)]">{o.titlu}</h1>
+        <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-ink-3">
+          <span class="inline-flex items-center gap-1.5"><Icon nume="pin" marime={17} />{locText(o.zona)}</span>
+          <span aria-hidden="true">·</span>
+          <span class="cifre">ID {o.id}</span>
+          <span aria-hidden="true">·</span>
+          <span>publicat pe {dataScurta(o.adaugat)}</span>
+        </p>
+      </div>
+      <div class="flex gap-2">
+        <button type="button" class="btn btn-contur actiune" data-favorit={o.id} aria-pressed="false">
+          <Icon nume="inima" marime={18} /><span class="text-salveaza">Salvează</span>
+        </button>
+        <button type="button" class="btn btn-contur" data-distribuie>Trimite cuiva</button>
+      </div>
+    </div>
+
+    <div class="mt-6">
+      <Galerie poze={o.poze} titlu={o.titlu} />
+    </div>
+  </div>
+
+  <div class="container-site mt-10 grid gap-12 lg:grid-cols-[1fr_380px] lg:gap-14">
+    <div class="min-w-0">
+      <section aria-labelledby="fisa-titlu">
+        <h2 id="fisa-titlu" class="text-xl">Fișa proprietății</h2>
+        <dl class="fisa mt-4 cifre">
+          {
+            fisa
+              .filter(([, v]) => v)
+              .map(([k, v]) => (
+                <div>
+                  <dt>{k}</dt>
+                  <dd>{v}</dd>
+                </div>
+              ))
+          }
+        </dl>
+      </section>
+
+      <section class="mt-12" aria-labelledby="desc-titlu">
+        <h2 id="desc-titlu" class="text-xl">Descriere</h2>
+        <div class="mt-4 max-w-[68ch] space-y-4 text-[1.05rem] leading-[1.7]">
+          {o.descriere.map((p) => <p>{p}</p>)}
+        </div>
+      </section>
+
+      <section class="mt-12" aria-labelledby="dot-titlu">
+        <h2 id="dot-titlu" class="text-xl">Ce are</h2>
+        <ul class="dotari mt-4">
+          {o.dotari.map((d) => <li>{d}</li>)}
+        </ul>
+      </section>
+
+      <section class="mt-12" aria-labelledby="zona-titlu">
+        <h2 id="zona-titlu" class="text-xl">Zona</h2>
+        <p class="mt-2 text-ink-3">
+          Cercul arată zona din {locText(o.zona)}. Adresa exactă o primești când programezi vizionarea, la cererea
+          proprietarului.
+        </p>
+        <div class="harta-mica mt-4" data-harta-oferta data-coord={JSON.stringify(o.coord)} role="region" aria-label="Harta zonei"></div>
+      </section>
+
+      {
+        o.tranzactie === 'vanzare' && o.tip !== 'teren' && (
+          <section class="mt-12" aria-labelledby="rata-titlu">
+            <h2 id="rata-titlu" class="text-xl">Cât ar fi rata</h2>
+            <p class="mt-2 text-ink-3">Prețul acestei oferte e deja completat. Schimbă avansul sau perioada.</p>
+            <div class="mt-5">
+              <CalculatorRata pret={o.pret} />
+            </div>
+          </section>
+        )
+      }
+    </div>
+
+    <!-- PANOU DE CONTACT -->
+    <aside class="lg:sticky lg:top-[calc(var(--header-h)+24px)] lg:self-start" aria-label="Preț și contact">
+      <div class="panou">
+        <p class="text-sm text-ink-3">{o.tranzactie === 'vanzare' ? 'Preț cerut' : 'Chirie'}{o.negociabil && ', negociabil'}</p>
+        <p class="pret cifre">{pretText(o)}</p>
+        {
+          (o.pretVechi || mp) && (
+            <p class="mt-1 text-sm text-ink-3 cifre">
+              {o.pretVechi && (
+                <span>
+                  înainte <s>{numar(o.pretVechi)} €</s>
+                </span>
+              )}
+              {o.pretVechi && mp && ' · '}
+              {mp}
+            </p>
+          )
+        }
+        {
+          o.etichete.includes('comision0') && (
+            <p class="mt-3 text-sm text-ink">
+              <strong>Fără comision</strong> pentru cumpărător.
+            </p>
+          )
+        }
+
+        <div class="mt-5 grid gap-2.5">
+          <a href={firma.telefonLink} class="btn btn-ink"><Icon nume="telefon" marime={18} /> Sună la {firma.telefon}</a>
+          <a href={linkWhatsApp(mesaj)} class="btn btn-contur" target="_blank" rel="noopener"><Icon nume="whatsapp" marime={18} /> Scrie pe WhatsApp</a>
+        </div>
+
+        <form class="mt-6 border-t border-line pt-5 grid gap-3" data-vizionare data-id={o.id} data-titlu={o.titlu} novalidate>
+          <p class="font-semibold text-ink">Programează o vizionare</p>
+          <div>
+            <label class="eticheta-camp" for="viz-nume">Nume</label>
+            <input class="camp" id="viz-nume" name="nume" autocomplete="name" required />
+          </div>
+          <div>
+            <label class="eticheta-camp" for="viz-tel">Telefon</label>
+            <input class="camp cifre" id="viz-tel" name="telefon" type="tel" inputmode="tel" autocomplete="tel" required />
+          </div>
+          <div>
+            <label class="eticheta-camp" for="viz-cand">Când îți convine</label>
+            <select class="camp" id="viz-cand" name="cand">
+              <option>cât mai repede</option>
+              <option>în cursul săptămânii, după ora 17</option>
+              <option>sâmbătă</option>
+              <option>duminică, cu programare</option>
+            </select>
+          </div>
+          <p class="text-sm text-[#8a2f1d]" data-eroare hidden role="alert">Completează numele și un număr de telefon valid.</p>
+          <button type="submit" class="btn btn-ink">Trimite cererea</button>
+          <p class="text-xs text-ink-3">Cererea pleacă pe WhatsApp, cu ID-ul ofertei completat.</p>
+        </form>
+      </div>
+
+      <div class="agent mt-4">
+        <img src={cale('/favicon.svg')} alt="" width="44" height="44" class="h-11 w-11 rounded-md border border-line bg-white p-1.5" />
+        <div>
+          <p class="font-semibold text-ink">{firma.nume}</p>
+          <p class="text-sm text-ink-3">Răspundem de obicei în aceeași zi.</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <section class="container-site mt-20 md:mt-24" aria-labelledby="sim-titlu">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <h2 id="sim-titlu" class="titlu-sectiune">S-ar putea să te intereseze și</h2>
+      <a href={listaTip} class="link-sub">Toate: {numeTip[o.tip].multe.toLowerCase()} {numeTranzactie[o.tranzactie]}</a>
+    </div>
+    <div class="mt-8 grid gap-x-6 gap-y-11 sm:grid-cols-2 lg:grid-cols-3">
+      {asemanatoare.map((x) => <OfertaCard o={x} />)}
+    </div>
+  </section>
+
+  <!-- bara de jos pe telefon -->
+  <div class="bara-mobil lg:hidden">
+    <div>
+      <p class="pret-mic cifre">{pretText(o)}</p>
+      <p class="text-xs text-ink-3 cifre">ID {o.id}</p>
+    </div>
+    <a href={firma.telefonLink} class="btn btn-contur" aria-label={`Sună la ${firma.telefon}`}><Icon nume="telefon" marime={18} /> Sună</a>
+    <a href={linkWhatsApp(mesaj)} class="btn btn-ink" target="_blank" rel="noopener"><Icon nume="whatsapp" marime={18} /> WhatsApp</a>
+  </div>
+</Baza>
+
+<style>
+  .panou {
+    padding: 24px;
+    border-radius: var(--radius-panou);
+    background: #fff;
+    box-shadow: var(--shadow-panou);
+  }
+  .pret {
+    margin-top: 2px;
+    color: var(--color-ink);
+    font-size: 2.1rem;
+    font-weight: 700;
+    font-stretch: 112%;
+    line-height: 1.1;
+  }
+  .agent {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 4px;
+  }
+  .dotari {
+    display: grid;
+    gap: 0 2.5rem;
+    border-top: 1px solid var(--color-line);
+  }
+  .dotari li {
+    position: relative;
+    padding: 0.7rem 0 0.7rem 1.4rem;
+    border-bottom: 1px solid var(--color-line);
+    color: var(--color-ink);
+  }
+  .dotari li::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    width: 6px;
+    height: 11px;
+    border-right: 2px solid var(--color-brass-ink);
+    border-bottom: 2px solid var(--color-brass-ink);
+    transform: translateY(-62%) rotate(45deg);
+  }
+  @media (min-width: 640px) {
+    .dotari {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .harta-mica {
+    height: 340px;
+    border-radius: var(--radius-panou);
+    overflow: hidden;
+    border: 1px solid var(--color-line);
+    background: #f1ede6;
+  }
+  .actiune[aria-pressed='true'] {
+    background: var(--color-ink);
+    color: #fff;
+  }
+  .actiune[aria-pressed='true'] :global(path) {
+    fill: currentColor;
+  }
+  .bara-mobil {
+    display: none;
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 40;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+    padding: 10px var(--gutter) calc(10px + env(safe-area-inset-bottom));
+    background: #fff;
+    border-top: 1px solid var(--color-line);
+    box-shadow: 0 -8px 24px -12px rgb(19 35 46 / 0.25);
+  }
+  .bara-mobil .btn {
+    min-height: 44px;
+    padding: 0 14px;
+  }
+  .pret-mic {
+    color: var(--color-ink);
+    font-weight: 700;
+    font-stretch: 112%;
+    font-size: 1.1rem;
+    line-height: 1.2;
+  }
+  @media (max-width: 1023px) {
+    .bara-mobil {
+      display: grid;
+    }
+    :global(footer) {
+      padding-bottom: 76px;
+    }
+  }
+</style>
+
+<script>
+  import { leagaButoaneFavorite } from '../../lib/favorite';
+  import { linkWhatsApp } from '../../data/firma';
+
+  leagaButoaneFavorite();
+  // Textul butonului „Salvează” urmează starea.
+  const salv = document.querySelector<HTMLButtonElement>('.actiune[data-favorit]');
+  const eticheta = () => {
+    if (salv) salv.querySelector('.text-salveaza')!.textContent = salv.getAttribute('aria-pressed') === 'true' ? 'Salvată' : 'Salvează';
+  };
+  eticheta();
+  window.addEventListener('favorite-schimbat', () => setTimeout(eticheta));
+
+  // Trimite cuiva: meniul nativ de share pe telefon, copiere de link pe desktop.
+  const dist = document.querySelector<HTMLButtonElement>('[data-distribuie]')!;
+  dist.addEventListener('click', async () => {
+    const url = location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: document.title, url });
+      } catch {
+        /* anulat */
+      }
+      return;
+    }
+    await navigator.clipboard?.writeText(url);
+    dist.textContent = 'Link copiat';
+    setTimeout(() => (dist.textContent = 'Trimite cuiva'), 2000);
+  });
+
+  // Cererea de vizionare pleacă pe WhatsApp, cu ID-ul completat.
+  const f = document.querySelector<HTMLFormElement>('[data-vizionare]')!;
+  f.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const d = new FormData(f);
+    const nume = String(d.get('nume') || '').trim();
+    const tel = String(d.get('telefon') || '');
+    const ok = nume.length >= 2 && tel.replace(/\D/g, '').length >= 10;
+    f.querySelector<HTMLElement>('[data-eroare]')!.hidden = ok;
+    if (!ok) return;
+    const mesaj = `Bună ziua! Aș vrea să văd oferta ${f.dataset.id}: ${f.dataset.titlu}.\nÎmi convine: ${d.get('cand')}.\n\n${nume}, ${tel}`;
+    window.open(linkWhatsApp(mesaj), '_blank', 'noopener');
+  });
+
+  // Harta zonei: un cerc, nu un pin, pentru că adresa nu se publică.
+  const el = document.querySelector<HTMLElement>('[data-harta-oferta]')!;
+  const io = new IntersectionObserver(
+    async (x) => {
+      if (!x[0].isIntersecting) return;
+      io.disconnect();
+      const { creeazaHarta, maplibregl } = await import('../../lib/harta');
+      const coord = JSON.parse(el.dataset.coord!) as [number, number];
+      const map = creeazaHarta(el, { centru: coord, zoom: 14.2 });
+      const cerc = document.createElement('div');
+      cerc.className = 'zona-aprox';
+      map.on('load', () => new maplibregl.Marker({ element: cerc }).setLngLat(coord).addTo(map));
+    },
+    { rootMargin: '300px' },
+  );
+  io.observe(el);
+</script>

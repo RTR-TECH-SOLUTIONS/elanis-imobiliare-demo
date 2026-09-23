@@ -1,0 +1,12 @@
+---
+import Baza from '../layouts/Baza.astro';
+import { cale } from '../lib/oferta';
+---
+
+<Baza titlu="Pagina nu există · Elanis Imobiliare">
+  <div class="container-site py-24 md:py-32">
+    <h1 class="text-[clamp(2rem,1.3rem+2.6vw,3rem)]">Pagina asta nu mai există</h1>
+    <p class="mt-4 max-w-md">Poate oferta a fost vândută între timp. Ne uităm împreună prin ce avem acum.</p>
+    <a href={cale('/oferte/')} class="btn btn-ink mt-8">Vezi ofertele</a>
+  </div>
+</Baza>

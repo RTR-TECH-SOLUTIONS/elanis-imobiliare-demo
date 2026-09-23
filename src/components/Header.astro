@@ -1,0 +1,255 @@
+---
+import Icon from './Icon.astro';
+import { firma, linkWhatsApp } from '../data/firma';
+import { cale } from '../lib/oferta';
+
+interface Props {
+  peste?: boolean;
+}
+const { peste = false } = Astro.props;
+
+const nav = [
+  { eticheta: 'Cumpără', href: cale('/oferte/?tranzactie=vanzare') },
+  { eticheta: 'Închiriază', href: cale('/oferte/?tranzactie=inchiriere') },
+  { eticheta: 'Case', href: cale('/oferte/?tip=casa') },
+  { eticheta: 'Terenuri', href: cale('/oferte/?tip=teren') },
+  { eticheta: 'Harta ofertelor', href: cale('/oferte/?vedere=harta') },
+  { eticheta: 'Contact', href: cale('/contact/') },
+];
+---
+
+<header id="antet" class:list={['antet', peste && 'transparent']} data-peste={peste ? '1' : undefined}>
+  <div class="container-site flex h-full items-center gap-6">
+    <a href={cale('/')} class="logo shrink-0" aria-label="Elanis Imobiliare, prima pagină">
+      <img src={cale('/logo.svg')} alt="" width="206" height="42" class="logo-inchis" />
+      <img src={cale('/logo-light.svg')} alt="" width="206" height="42" class="logo-deschis" />
+    </a>
+
+    <nav class="ml-auto hidden lg:block" aria-label="Meniu principal">
+      <ul class="flex items-center gap-1">
+        {
+          nav.map((l) => (
+            <li>
+              <a href={l.href} class="nav-link">
+                {l.eticheta}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="ml-auto flex items-center gap-2 lg:ml-2">
+      <a href={firma.telefonLink} class="telefon inline-flex" aria-label={`Sună la ${firma.telefon}`}>
+        <Icon nume="telefon" marime={18} />
+        <span class="cifre hidden xl:inline">{firma.telefon}</span>
+      </a>
+      <a href={cale('/oferte/?favorite=1')} class="favorite inline-flex" aria-label="Ofertele salvate">
+        <Icon nume="inima" marime={20} />
+        <span class="favorite-nr cifre" data-favorite-nr hidden>0</span>
+      </a>
+      <a href={cale('/vinde/')} class="btn btn-ink cta hidden md:inline-flex">Vinde prin Elanis</a>
+      <button
+        type="button"
+        class="burger inline-flex lg:hidden"
+        aria-expanded="false"
+        aria-controls="meniu-mobil"
+        aria-label="Deschide meniul"
+        data-burger
+      >
+        <span class="ic-meniu"><Icon nume="meniu" marime={24} /></span>
+        <span class="ic-inchide"><Icon nume="inchide" marime={24} /></span>
+      </button>
+    </div>
+  </div>
+
+  <div id="meniu-mobil" class="meniu-mobil lg:hidden" hidden>
+    <div class="container-site py-6">
+      <ul class="border-t border-line">
+        {
+          nav.map((l) => (
+            <li class="border-b border-line">
+              <a href={l.href} class="block py-4 text-lg font-semibold text-ink">
+                {l.eticheta}
+              </a>
+            </li>
+          ))
+        }
+        <li class="border-b border-line">
+          <a href={cale('/vinde/')} class="block py-4 text-lg font-semibold text-ink">Vinde prin Elanis</a>
+        </li>
+      </ul>
+      <div class="mt-6 grid grid-cols-2 gap-3">
+        <a href={firma.telefonLink} class="btn btn-ink"><Icon nume="telefon" marime={18} /> Sună</a>
+        <a href={linkWhatsApp('Bună ziua! Vă scriu de pe site-ul Elanis Imobiliare.')} class="btn btn-contur"
+          ><Icon nume="whatsapp" marime={18} /> WhatsApp</a
+        >
+      </div>
+      <p class="mt-4 text-sm text-ink-3">{firma.telefon} · {firma.email}</p>
+    </div>
+  </div>
+</header>
+
+<style>
+  .antet {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 50;
+    height: var(--header-h);
+    background: color-mix(in srgb, var(--color-paper) 94%, transparent);
+    backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid var(--color-line);
+    transition:
+      background-color 220ms var(--ease-iesire),
+      border-color 220ms var(--ease-iesire);
+  }
+  .logo img {
+    display: block;
+    height: 36px;
+    width: auto;
+  }
+  @media (min-width: 768px) {
+    .logo img {
+      height: 42px;
+    }
+  }
+  .logo-deschis {
+    display: none !important;
+  }
+  .nav-link {
+    display: block;
+    padding: 0.5rem 0.7rem;
+    border-radius: 6px;
+    color: var(--color-ink);
+    font-weight: 560;
+    font-size: 0.95rem;
+    transition: background-color 150ms var(--ease-iesire);
+  }
+  .nav-link:hover {
+    background: var(--color-paper-2);
+  }
+  /* display vine din utilitare în markup (hidden / sm:inline-flex / lg:hidden) */
+  .telefon,
+  .favorite,
+  .burger {
+    position: relative;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    min-width: 44px;
+    justify-content: center;
+    padding: 0 0.6rem;
+    border-radius: 8px;
+    color: var(--color-ink);
+    font-weight: 600;
+    transition: background-color 150ms var(--ease-iesire);
+  }
+  .telefon:hover,
+  .favorite:hover,
+  .burger:hover {
+    background: var(--color-paper-2);
+  }
+  .burger[aria-expanded='true'] .ic-meniu,
+  .burger:not([aria-expanded='true']) .ic-inchide {
+    display: none;
+  }
+  .favorite-nr {
+    position: absolute;
+    top: 5px;
+    right: 3px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 9px;
+    background: var(--color-brass);
+    color: #1b1406;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+  }
+  .meniu-mobil {
+    position: fixed;
+    inset: var(--header-h) 0 0 0;
+    overflow-y: auto;
+    background: var(--color-paper);
+  }
+
+  /* Varianta transparentă, doar peste fotografia din hero. */
+  .antet.transparent {
+    background: transparent;
+    backdrop-filter: none;
+    border-color: transparent;
+  }
+  .antet.transparent .logo-inchis {
+    display: none !important;
+  }
+  .antet.transparent .logo-deschis {
+    display: block !important;
+  }
+  .antet.transparent .nav-link,
+  .antet.transparent .telefon,
+  .antet.transparent .favorite,
+  .antet.transparent .burger {
+    color: #fff;
+  }
+  .antet.transparent .nav-link:hover,
+  .antet.transparent .telefon:hover,
+  .antet.transparent .favorite:hover,
+  .antet.transparent .burger:hover {
+    background: rgb(255 255 255 / 0.12);
+  }
+  .antet.transparent .cta {
+    background: #fff;
+    color: var(--color-ink);
+  }
+  .antet.transparent .cta:hover {
+    background: var(--color-paper-2);
+  }
+  /* backdrop-filter face din antet bloc de conținere pentru meniul fixed,
+     care altfel s-ar strânge la înălțimea antetului. */
+  .antet.deschis-mobil {
+    background: var(--color-paper);
+    border-color: var(--color-line);
+    backdrop-filter: none;
+  }
+</style>
+
+<script>
+  import { citesteFavorite } from '../lib/favorite';
+
+  const antet = document.getElementById('antet')!;
+  const burger = antet.querySelector<HTMLButtonElement>('[data-burger]')!;
+  const meniu = document.getElementById('meniu-mobil')!;
+  const peste = antet.dataset.peste === '1';
+
+  // Peste hero antetul e transparent; după ce fotografia iese din ecran devine solid.
+  function actualizeaza() {
+    const solid = !peste || window.scrollY > window.innerHeight * 0.55 || !meniu.hidden;
+    antet.classList.toggle('transparent', !solid);
+  }
+  if (peste) {
+    window.addEventListener('scroll', actualizeaza, { passive: true });
+    actualizeaza();
+  }
+
+  burger.addEventListener('click', () => {
+    const deschide = meniu.hidden === true;
+    meniu.hidden = !deschide;
+    burger.setAttribute('aria-expanded', String(deschide));
+    burger.setAttribute('aria-label', deschide ? 'Închide meniul' : 'Deschide meniul');
+    document.documentElement.style.overflow = deschide ? 'hidden' : '';
+    antet.classList.toggle('deschis-mobil', deschide);
+    actualizeaza();
+  });
+
+  // Numărul de oferte salvate, ținut în localStorage.
+  function arataFavorite() {
+    const nr = citesteFavorite().length;
+    const el = antet.querySelector<HTMLElement>('[data-favorite-nr]')!;
+    el.textContent = String(nr);
+    el.hidden = nr === 0;
+  }
+  arataFavorite();
+  window.addEventListener('favorite-schimbat', arataFavorite);
+</script>

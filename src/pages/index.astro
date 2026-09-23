@@ -1,0 +1,468 @@
+---
+import Baza from '../layouts/Baza.astro';
+import CautareHero from '../components/CautareHero.astro';
+import OfertaCard from '../components/OfertaCard.astro';
+import HartaCartiere from '../components/HartaCartiere.astro';
+import CalculatorRata from '../components/CalculatorRata.astro';
+import VindeForm from '../components/VindeForm.astro';
+import Icon from '../components/Icon.astro';
+import { oferte } from '../data/oferte';
+import { firma, linkWhatsApp } from '../data/firma';
+import { cale, dupaData, pozaUrl } from '../lib/oferta';
+
+const noi = dupaData(oferte);
+const cele6 = noi.slice(0, 6);
+
+// „Azi la Elanis”: se numără față de cea mai nouă ofertă, nu față de ziua în
+// care e deschis demo-ul, ca blocul să nu rămână gol peste o lună.
+const ultima = new Date(noi[0].adaugat);
+const cuZile = (iso: string) => (ultima.getTime() - new Date(iso).getTime()) / 86400000;
+const azi = {
+  noi: oferte.filter((o) => cuZile(o.adaugat) <= 7).length,
+  redus: oferte.filter((o) => o.etichete.includes('pretRedus')).length,
+  comision0: oferte.filter((o) => o.etichete.includes('comision0')).length,
+  exclusiv: oferte.filter((o) => o.etichete.includes('exclusivitate')).length,
+};
+
+const nr = (f: (o: (typeof oferte)[number]) => boolean) => oferte.filter(f).length;
+const categorii = [
+  {
+    nume: 'Apartamente',
+    nr: nr((o) => (o.tip === 'apartament' || o.tip === 'garsoniera') && o.tranzactie === 'vanzare'),
+    detaliu: 'de vânzare, de la garsoniere la 3 camere',
+    href: cale('/oferte/?tranzactie=vanzare&tip=apartament,garsoniera'),
+    poza: 'ap3-micro3-living',
+    cls: 'mare',
+  },
+  { nume: 'Case', nr: nr((o) => o.tip === 'casa'), detaliu: 'cu curte, în Turda și Mihai Viteazu', href: cale('/oferte/?tip=casa'), poza: 'casa-poiana-exterior', cls: 'lata' },
+  { nume: 'Terenuri', nr: nr((o) => o.tip === 'teren'), detaliu: 'intravilane', href: cale('/oferte/?tip=teren'), poza: 'teren-cheia', cls: '' },
+  { nume: 'De închiriat', nr: nr((o) => o.tranzactie === 'inchiriere'), detaliu: 'apartamente și spații', href: cale('/oferte/?tranzactie=inchiriere'), poza: 'ap2-micro1-living', cls: '' },
+];
+
+const pasi = [
+  { t: 'Ne suni sau ne scrii', d: 'Ne spui ce ai de vândut și când putem trece să vedem proprietatea.' },
+  { t: 'Evaluarea, gratuit', d: 'Venim la fața locului și îți spunem un preț realist, pe baza vânzărilor recente din același cartier.' },
+  { t: 'Poze și anunț peste tot', d: 'Facem pozele, scriem anunțul și îl publicăm pe site, pe portalurile mari, pe Facebook și pe TikTok.' },
+  { t: 'Vizionări și acte', d: 'Programăm vizionările, negociem pentru tine și te însoțim până la notar.' },
+];
+---
+
+<Baza
+  titlu="Elanis Imobiliare · apartamente, case și terenuri în Turda"
+  descriere="Agenție imobiliară în Turda: apartamente, case, terenuri și spații comerciale de vânzare și de închiriat în Micro 1-4, Oprișani, Centru, Turda Nouă, Poiana și împrejurimi."
+  peste
+>
+  <link
+    slot="head"
+    rel="preload"
+    as="image"
+    imagesrcset={`${cale('/img/site/turda-hero-1400.webp')} 1400w, ${cale('/img/site/turda-hero-2400.webp')} 2400w`}
+    imagesizes="100vw"
+    media="(min-width: 768px)"
+  />
+
+  <!-- HERO -->
+  <section class="hero">
+    <picture>
+      <source media="(max-width: 767px)" srcset={cale('/img/site/turda-hero-m-900.webp')} width="900" height="1125" />
+      <img
+        src={cale('/img/site/turda-hero-1400.webp')}
+        srcset={`${cale('/img/site/turda-hero-1400.webp')} 1400w, ${cale('/img/site/turda-hero-2400.webp')} 2400w`}
+        sizes="100vw"
+        alt="Turda văzută de sus: acoperișuri, turnul Bisericii Reformate și Cheile Turzii în depărtare"
+        width="2400"
+        height="1350"
+        fetchpriority="high"
+        class="hero-foto"
+      />
+    </picture>
+    <div class="hero-umbra" aria-hidden="true"></div>
+
+    <div class="container-site hero-continut">
+      <div class="max-w-[640px]">
+        <p class="text-[0.95rem] font-medium text-white/85">{firma.zona} · {oferte.length} oferte active</p>
+        <h1 class="hero-titlu">Apartamente, case și terenuri în Turda</h1>
+        <p class="mt-5 max-w-[520px] text-[1.075rem] leading-relaxed text-white/90">
+          Vindem, cumpărăm și închiriem în <span class="whitespace-nowrap">Micro 1–4</span>, Oprișani, Centru, Turda Nouă, Poiana și în comunele din jur. Ne
+          suni, iar la vizionare mergem împreună.
+        </p>
+      </div>
+      <div class="mt-9 lg:mt-12">
+        <CautareHero />
+      </div>
+    </div>
+    <p class="hero-legenda">Turda, cu turnul Bisericii Reformate și Cheile Turzii în fundal</p>
+  </section>
+
+  <!-- AZI LA ELANIS -->
+  <section class="border-b border-line bg-panel" aria-labelledby="azi-titlu">
+    <div class="container-site flex flex-col gap-3 py-5 lg:flex-row lg:items-center lg:gap-8">
+      <h2 id="azi-titlu" class="shrink-0 text-base" style="font-stretch:100%">
+        Azi la Elanis <span class="font-normal text-ink-3" data-azi></span>
+      </h2>
+      <ul class="azi-lista cifre">
+        <li><a href={cale('/oferte/?sort=noi')}><strong>{azi.noi}</strong> oferte noi în ultima săptămână</a></li>
+        <li><a href={cale('/oferte/?eticheta=pretRedus')}><strong>{azi.redus}</strong> cu preț redus</a></li>
+        <li><a href={cale('/oferte/?eticheta=comision0')}><strong>{azi.comision0}</strong> fără comision pentru cumpărător</a></li>
+        <li><a href={cale('/oferte/?eticheta=exclusivitate')}><strong>{azi.exclusiv}</strong> în exclusivitate</a></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- OFERTE NOI -->
+  <section class="container-site pt-16 md:pt-24" aria-labelledby="noi-titlu">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h2 id="noi-titlu" class="titlu-sectiune">Oferte noi</h2>
+        <p class="mt-2 text-ink-3">Ultimele proprietăți intrate în portofoliu, cele mai noi primele.</p>
+      </div>
+      <a href={cale('/oferte/')} class="link-sub">Toate cele {oferte.length} oferte</a>
+    </div>
+    <div class="mt-9 grid gap-x-6 gap-y-11 sm:grid-cols-2 lg:grid-cols-3">
+      {cele6.map((o, i) => <OfertaCard o={o} prioritar={i < 3} />)}
+    </div>
+  </section>
+
+  <!-- CATEGORII -->
+  <section class="container-site pt-20 md:pt-28" aria-labelledby="cat-titlu">
+    <h2 id="cat-titlu" class="titlu-sectiune">Ce cauți?</h2>
+    <div class="mozaic mt-8">
+      {
+        categorii.map((c) => (
+          <a href={c.href} class:list={['dala apare', c.cls]}>
+            <img src={pozaUrl(c.poza, c.cls === 'mare' ? 1600 : 800)} alt="" width="800" height="600" loading="lazy" decoding="async" />
+            <span class="dala-text">
+              <span class="dala-nume">{c.nume}</span>
+              <span class="dala-det cifre">
+                {c.nr} {c.nr === 1 ? 'ofertă' : 'oferte'} · {c.detaliu}
+              </span>
+            </span>
+          </a>
+        ))
+      }
+    </div>
+    <p class="mt-5 text-ink-3">
+      Ai o afacere? Avem și <a class="link-sub" href={cale('/oferte/?tip=spatiu')}>un spațiu comercial cu vitrină în centru</a>.
+    </p>
+  </section>
+
+  <!-- HARTA -->
+  <section class="container-site pt-20 md:pt-28" aria-labelledby="harta-titlu">
+    <div class="max-w-2xl">
+      <h2 id="harta-titlu" class="titlu-sectiune">Pe cartiere</h2>
+      <p class="mt-2 text-ink-3">Alege cartierul și vezi pe hartă ce avem acolo. Prețurile de pe pini sunt cele cerute de proprietari.</p>
+    </div>
+    <div class="mt-8">
+      <HartaCartiere oferte={oferte} />
+    </div>
+  </section>
+
+  <!-- VINDE -->
+  <section id="vinde" class="mt-20 bg-paper-2 py-16 md:mt-28 md:py-24" aria-labelledby="vinde-titlu">
+    <div class="container-site grid gap-12 lg:grid-cols-12">
+      <div class="lg:col-span-5">
+        <h2 id="vinde-titlu" class="titlu-sectiune">Vrei să vinzi sau să dai în chirie?</h2>
+        <p class="mt-4 max-w-md text-[1.05rem] leading-relaxed">
+          Cei mai mulți cumpărători din Turda caută întâi pe telefon. Îți facem anunțul, îl ținem la vedere și îți
+          aducem doar vizionările serioase.
+        </p>
+        <ol class="pasi mt-9">
+          {
+            pasi.map((p, i) => (
+              <li>
+                <span class="pas-nr cifre">{i + 1}</span>
+                <div>
+                  <h3 class="text-[1.05rem]" style="font-stretch:100%">
+                    {p.t}
+                  </h3>
+                  <p class="mt-1 text-[0.95rem] text-ink-3">{p.d}</p>
+                </div>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+      <div class="lg:col-span-6 lg:col-start-7">
+        <VindeForm />
+      </div>
+    </div>
+  </section>
+
+  <!-- CREDIT -->
+  <section class="container-site pt-20 md:pt-28" aria-labelledby="credit-titlu">
+    <div class="max-w-2xl">
+      <h2 id="credit-titlu" class="titlu-sectiune">Cumperi cu credit? Vezi cât ar fi rata</h2>
+      <p class="mt-2 text-ink-3">Pune prețul locuinței și avansul pe care îl ai. Calculul se face pe loc.</p>
+    </div>
+    <div class="mt-9">
+      <CalculatorRata pret={92500} />
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="container-site pt-20 md:pt-28" aria-labelledby="contact-titlu">
+    <div class="contact-banda">
+      <div>
+        <h2 id="contact-titlu" class="titlu-sectiune text-white">Programează o vizionare</h2>
+        <p class="mt-3 max-w-md text-white/80">
+          Spune-ne ce ofertă te interesează și când ai timp. Vizionările se fac și sâmbăta, iar duminica doar cu
+          programare.
+        </p>
+      </div>
+      <div class="flex flex-col items-start gap-4 lg:items-end">
+        <a href={firma.telefonLink} class="telefon-mare cifre">{firma.telefon}</a>
+        <div class="flex flex-wrap gap-3">
+          <a href={firma.telefonLink} class="btn btn-alb"><Icon nume="telefon" marime={18} /> Sună acum</a>
+          <a
+            href={linkWhatsApp('Bună ziua! Aș vrea să programez o vizionare.')}
+            class="btn border border-white/40 text-white hover:bg-white/10"
+            target="_blank"
+            rel="noopener"><Icon nume="whatsapp" marime={18} /> Scrie pe WhatsApp</a
+          >
+        </div>
+      </div>
+    </div>
+  </section>
+</Baza>
+
+<style>
+  .hero {
+    position: relative;
+    isolation: isolate;
+    min-height: max(680px, 94svh);
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+    background: #1a2a36;
+  }
+  .hero-foto {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 62% 40%;
+    z-index: -2;
+  }
+  /* Umbră doar unde stă textul (stânga și sus, sub antet), nu un gradient decorativ. */
+  .hero-umbra {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(180deg, rgb(9 18 25 / 0.55) 0%, rgb(9 18 25 / 0) 22%),
+      linear-gradient(0deg, rgb(9 18 25 / 0.55) 0%, rgb(9 18 25 / 0) 45%),
+      linear-gradient(90deg, rgb(9 18 25 / 0.7) 0%, rgb(9 18 25 / 0.35) 50%, rgb(9 18 25 / 0) 80%);
+  }
+  .hero-continut {
+    padding-top: calc(var(--header-h) + 48px);
+    padding-bottom: 64px;
+  }
+  .hero-titlu {
+    margin-top: 14px;
+    color: #fff;
+    font-size: clamp(2.35rem, 1.3rem + 4.2vw, 4.4rem);
+    font-weight: 650;
+    font-stretch: 112%;
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+  }
+  .hero-legenda {
+    position: absolute;
+    right: var(--gutter);
+    bottom: 18px;
+    color: rgb(255 255 255 / 0.7);
+    font-size: 0.78rem;
+    display: none;
+  }
+  @media (min-width: 1024px) {
+    .hero-legenda {
+      display: block;
+    }
+    .hero-continut {
+      padding-bottom: 72px;
+    }
+  }
+  @media (max-width: 767px) {
+    .hero-foto {
+      object-position: 50% 30%;
+    }
+    .hero-umbra {
+      background:
+        linear-gradient(180deg, rgb(9 18 25 / 0.6) 0%, rgb(9 18 25 / 0.25) 40%, rgb(9 18 25 / 0.55) 70%, rgb(9 18 25 / 0.8) 100%);
+    }
+  }
+
+  .azi-lista {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 22px;
+    font-size: 0.95rem;
+  }
+  .azi-lista a {
+    color: var(--color-ink-2);
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 4px;
+    transition: text-decoration-color 150ms var(--ease-iesire);
+  }
+  .azi-lista a:hover {
+    text-decoration-color: var(--color-brass);
+  }
+  .azi-lista strong {
+    color: var(--color-ink);
+  }
+  .azi-lista li + li::before {
+    content: '·';
+    margin-right: 22px;
+    margin-left: -12px;
+    color: var(--color-line-2);
+  }
+  @media (max-width: 1023px) {
+    .azi-lista li + li::before {
+      display: none;
+    }
+    .azi-lista {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .mozaic {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 180px;
+  }
+  .dala {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-foto);
+    background: var(--color-ink);
+  }
+  .dala.mare {
+    grid-column: 1 / -1;
+    grid-row: span 2;
+  }
+  .dala.lata {
+    grid-column: 1 / -1;
+  }
+  .dala img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 600ms var(--ease-iesire);
+  }
+  .dala:hover img {
+    transform: scale(1.04);
+  }
+  .dala::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, rgb(9 18 25 / 0.72) 0%, rgb(9 18 25 / 0) 55%);
+  }
+  .dala-text {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 14px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    color: #fff;
+  }
+  .dala-nume {
+    font-size: 1.35rem;
+    font-weight: 650;
+    font-stretch: 112%;
+    line-height: 1.15;
+  }
+  .dala.mare .dala-nume {
+    font-size: clamp(1.6rem, 1.2rem + 1.4vw, 2.3rem);
+  }
+  .dala-det {
+    margin-top: 2px;
+    color: rgb(255 255 255 / 0.85);
+    font-size: 0.9rem;
+  }
+  @media (max-width: 899px) {
+    .dala:not(.mare, .lata) .dala-nume {
+      font-size: 1.15rem;
+    }
+    .dala:not(.mare, .lata) .dala-det {
+      font-size: 0.82rem;
+    }
+  }
+  @media (min-width: 900px) {
+    .mozaic {
+      grid-template-columns: 1.25fr 1fr 1fr;
+      grid-template-rows: 250px 250px;
+      grid-auto-rows: auto;
+      gap: 14px;
+    }
+    .dala.mare {
+      grid-column: 1;
+      grid-row: 1 / span 2;
+    }
+    .dala.lata {
+      grid-column: 2 / span 2;
+    }
+  }
+
+  .pasi {
+    border-top: 1px solid var(--color-line-2);
+  }
+  .pasi li {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 14px;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--color-line-2);
+  }
+  .pas-nr {
+    color: var(--color-brass-ink);
+    font-size: 1.35rem;
+    font-weight: 700;
+    font-stretch: 112%;
+    line-height: 1.2;
+  }
+
+  .contact-banda {
+    display: grid;
+    gap: 28px;
+    padding: 36px 24px;
+    border-radius: var(--radius-panou);
+    background: var(--color-ink);
+  }
+  @media (min-width: 1024px) {
+    .contact-banda {
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      padding: 56px 56px;
+    }
+  }
+  .telefon-mare {
+    color: #fff;
+    font-size: clamp(2rem, 1.4rem + 2.6vw, 3.4rem);
+    font-weight: 700;
+    font-stretch: 115%;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    border-bottom: 3px solid var(--color-brass);
+    padding-bottom: 6px;
+  }
+</style>
+
+<script>
+  // Data de azi, scrisă ca în calendar: „marți, 23 septembrie”.
+  const el = document.querySelector('[data-azi]');
+  if (el) {
+    el.textContent = '· ' + new Intl.DateTimeFormat('ro-RO', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+  }
+</script>
+
+<script>
+  import { leagaButoaneFavorite } from '../lib/favorite';
+  leagaButoaneFavorite();
+</script>
