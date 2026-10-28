@@ -11,4 +11,3 @@ public/maplibre/
 # Materiale brute ale clientului și capturi de lucru: stau local, nu în repo.
 _brief/
 .playwright-mcp/
-.claude/
